@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Joke Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .joke-card {
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .joke-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader {
+            border: 4px solid rgba(102, 126, 234, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-gradient:active {
+            transform: translateY(0);
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .joke-text {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .joke-setup {
+            font-size: 1.25rem;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+
+        .joke-punchline {
+            font-size: 1.25rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .icon-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .copy-btn {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .copy-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .share-btn {
+            background: #10b981;
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .category-filter {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .category-btn {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .category-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .error-toast {
+            background: #ef4444;
+        }
+
+        .history-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto">
+
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-6xl font-bold text-white mb-4">
+                    <i class="fas fa-laugh-beam"></i> Joke Generator
+                </h1>
+                <p class="text-xl text-white/80">Get random jokes to brighten your day!</p>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="glass-effect rounded-2xl p-6 shadow-2xl mb-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-filter mr-2"></i> Select Category
+                </h3>
+                <div class="category-filter" id="categoryFilter">
+                    <button class="category-btn active" data-category="any">
+                        <i class="fas fa-star mr-1"></i> Any
+                    </button>
+                    <button class="category-btn" data-category="general">
+                        <i class="fas fa-grin mr-1"></i> General
+                    </button>
+                    <button class="category-btn" data-category="knock-knock">
+                        <i class="fas fa-door-open mr-1"></i> Knock-Knock
+                    </button>
+                    <button class="category-btn" data-category="programming">
+                        <i class="fas fa-code mr-1"></i> Programming
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Joke Display -->
+            <div id="jokeContainer" class="hidden">
+                <div class="glass-effect rounded-2xl p-8 shadow-2xl joke-card mb-8">
+                    <div id="jokeContent" class="joke-text">
+                        <!-- Joke will be displayed here -->
+                    </div>
+                    <span id="categoryBadge" class="category-badge"></span>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="copyBtn" class="icon-btn copy-btn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button id="shareBtn" class="icon-btn share-btn">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                        <button id="nextBtn" class="btn-gradient icon-btn text-white flex-grow">
+                            <i class="fas fa-arrow-right"></i> Next Joke
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingContainer" class="glass-effect rounded-2xl p-12 shadow-2xl text-center mb-8 hidden">
+                <div class="flex justify-center mb-6">
+                    <div class="loader"></div>
+                </div>
+                <p class="text-gray-700 text-lg font-semibold">Loading a funny joke for you...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorContainer" class="glass-effect rounded-2xl p-8 shadow-2xl text-center mb-8 hidden">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                <p id="errorMessage" class="text-gray-700 text-lg font-semibold"></p>
+                <button id="retryBtn" class="btn-gradient text-white px-6 py-2 rounded-lg mt-4">
+                    <i class="fas fa-redo mr-2"></i> Try Again
+                </button>
+            </div>
+
+            <!-- Welcome State -->
+            <div id="welcomeContainer" class="glass-effect rounded-2xl p-12 shadow-2xl text-center">
+                <i class="fas fa-face-grin-tears text-6xl text-purple-600 mb-6"></i>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Ready to Laugh?</h2>
+                <p class="text-gray-600 text-lg mb-8">Click the button below to get started with a random joke. Choose a category if you prefer a specific type!</p>
+                <button id="startBtn" class="btn-gradient text-white px-8 py-3 rounded-lg text-lg font-semibold">
+                    <i class="fas fa-play mr-2"></i> Get First Joke
+                </button>
+            </div>
+
+            <!-- History Section -->
+            <div id="historySection" class="glass-effect rounded-2xl p-6 shadow-2xl mt-8 hidden">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-history mr-2"></i> Joke History
+                </h3>
+                <div id="historyList" class="history-container">
+                    <!-- History items will be added here -->
+                </div>
+                <button id="clearHistoryBtn" class="mt-4 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition font-semibold">
+                    <i class="fas fa-trash mr-2"></i> Clear History
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="joke-app.js"></script>
+</body>
+</html>
